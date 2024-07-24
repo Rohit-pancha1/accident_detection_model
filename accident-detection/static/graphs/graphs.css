@@ -1,0 +1,11 @@
+*{
+    margin: 0;
+    padding: 0;
+  /* overflow: hidden; */
+
+}
+#takeGraph{
+    width: 90%;
+    height: 90%;
+    margin: 40px auto;
+}

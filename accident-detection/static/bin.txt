@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Accident Analysis</title>
+    <link rel="stylesheet" href="static/style.css" />
+</head>
+
+<body>
+    <div id="hero home">
+        <header class="header">
+            <div class="row">
+                <div id="logo">
+                    <span class="t">A</span>LCHEMIST <span class="t">T</span>REASURE
+                </div>
+                <ul>
+                    <li><a href="#home" onclick="showSection('home')">Home</a></li>
+                    <li><a href="#previousAccidentReport" onclick="showSection('previousAccidentReport')">Old Report</a></li>
+                    <li><a title="For emergency services" href="#emergency_services">Services</a></li>
+                    <li><a href="#graphs" onclick="showSection('graphs')">Graphical Analysis</a></li>
+                </ul>
+            </div>
+        </header>
+        <!-- Home Section -->
+        <section class="home active" id="home">
+            <div class="container">
+                <h1 class="title">Accident Detection</h1>
+                <div class="items">
+                    <div class="video_stream item_box">
+                        <div class="ss"></div>
+                        <div class="cam start_cam">
+                            <span class="close" onclick="closeStream()">Close</span>
+                            <video id="videoFeed" autoplay></video>
+                        </div>
+                        <button class="start_cam" onclick="getCameraStream()">Start Camera</button>
+                    </div>
+                    <div class="file_upload item_box">
+                        <input type="file" class="i_box" id="videoInput" accept="video/*" />
+                        <button onclick="uploadVideo()">Upload Video</button>
+                    </div>
+                </div>
+                <div id="alerts">
+                    <h2>Alerts</h2>
+                    <div id="alertList"></div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Graphs Section -->
+        <section class="graphs" id="graphs">
+            <div class="shell">
+                <h1 class="title">Graphical Analysis</h1>
+                <div class="graph-container grid-container">
+                    <iframe class="item1" src="static/graphs/accidents_over_time.html" ></iframe>
+                    <iframe class="item2" src="static/graphs/daily_accidents.html" ></iframe>
+                    <iframe class="item3" src="static/graphs/accidents_by_location.html" ></iframe>
+                    <iframe class="item4" src="static/graphs/accidents_by_category.html" ></iframe>
+                </div>
+            </div>
+        </section>
+
+        <!-- Previous Accident Reports Section -->
+        <section class="previousAccidentReport" id="previousAccidentReport">
+            <div class="container">
+                <h2>Previous Accident Reports</h2>
+                <div id="previousAccidentPhotos"></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        async function getCameraStream() {
+            try {
+                document.querySelector('.cam').style.display = 'flex';
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                });
+                const video = document.getElementById("videoFeed");
+                video.srcObject = stream;
+            } catch (error) {
+                console.error("Error accessing the camera", error);
+                alert("Error accessing the camera.");
+            }
+        }
+
+        function closeStream() {
+            document.querySelector('.cam').style.display = 'none';
+            const video = document.getElementById("videoFeed");
+            const stream = video.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        }
+
+        async function uploadVideo() {
+            const fileInput = document.getElementById("videoInput");
+            if (fileInput.files.length === 0) {
+                alert("Please select a video file to upload.");
+                return;
+            }
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("video", file);
+
+            try {
+                const response = await fetch("/upload_video", {
+                    method: "POST",
+                    body: formData,
+                });
+
+                if (response.ok) {
+                    alert("Video uploaded successfully.");
+                } else {
+                    alert("Failed to upload video.");
+                }
+            } catch (error) {
+                console.error("Error uploading video", error);
+                alert("Error uploading video.");
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const response = await fetch("/alerts");
+                if (!response.ok) {
+                    throw new Error("Failed to fetch alerts");
+                }
+                const alerts = await response.json();
+                const alertList = document.getElementById("alertList");
+                alertList.innerHTML = alerts
+                    .map(
+                        (alert) => 
+                    `<div class="alert">
+                        <img src="${alert.photo}" alt="Accident photo">
+                        <p><strong>Time:</strong> ${alert.time}</p>
+                        <p><strong>Location:</strong> ${alert.location}</p>
+                    </div>`
+                    )
+                    .join("");
+            } catch (error) {
+                console.error("Error fetching or displaying alerts:", error);
+                alert("Error fetching or displaying alerts. Please check the console for details.");
+            }
+        }
+        fetchAlerts();
+        setInterval(fetchAlerts, 5000); // Fetch alerts every 5 seconds
+
+        function showSection(sectionId) {
+            document.querySelectorAll('section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+    </script>
+</body>
+
+</html>
+
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  list-style: none;
+  text-decoration: none;
+  overflow-x: hidden;
+  transition: all 0.2s ease;
+}
+
+:root {
+  --trbg-color: #16162d93;
+  --bg-color: #1b2255;
+  --text-color: #ffffff;
+  --p-color: #c0b8fc95;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: var(--bg-color);
+  position: relative;
+}
+
+h1 {
+  text-align: center;
+  color: var(--text-color);
+}
+
+p {
+  color: var(--p-color);
+}
+
+#videoFeed {
+  display: block;
+  border: 2px solid #ccc;
+  border-radius: 10px;
+  width: fit-content;
+  height: 450px;
+  position: absolute;
+}
+
+#alerts {
+  margin-top: 20px;
+  padding: 10px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.alert {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding: 10px 0;
+  justify-content: center;
+}
+
+#alerts #alertList {
+  display: grid;
+  grid-template-columns: auto auto auto;
+  gap: 10px;
+}
+
+.alert:last-child {
+  border-bottom: none;
+}
+
+.alert p {
+  margin: 5px 0;
+  color: #555;
+}
+
+.alert img {
+  margin-top: 10px;
+  border-radius: 5px;
+  width: 300px;
+  min-height: 100px;
+  max-width: 100%;
+  height: 200px;
+  box-shadow: 0 4px 8px #0000001a;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.alert img:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px #00000033;
+}
+
+.alert strong {
+  color: var(--bg-color);
+}
+
+.title {
+  font-size: 40px;
+  margin: 10px 0 20px 0;
+}
+
+header {
+  width: 100vw;
+  padding-top: 10px;
+  position: sticky;
+  top: 0;
+  background: var(--trbg-color);
+  z-index: 996;
+}
+
+.row {
+  width: 90%;
+  margin: auto;
+  max-width: 1500px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.row > ul {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  width: fit-content;
+}
+
+.row > ul > li > a {
+  color: var(--text-color);
+  margin-left: 25px;
+}
+
+.row > ul > li > a:hover {
+  color: var(--p-color);
+}
+
+#logo {
+  font-size: 25px;
+  color: var(--p-color);
+  font-weight: 100;
+}
+
+#logo .t {
+  color: var(--text-color);
+  font-weight: 700;
+}
+
+.container {
+  max-width: 1500px;
+  width: 80%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.items {
+  width: 100%;
+  height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.cam {
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  margin: auto;
+  z-index: 999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+
+.cam span.close {
+  position: absolute;
+  color: var(--text-color);
+  top: 20px;
+  right: 20px;
+  cursor: pointer;
+  padding: 5px 8px;
+  font-size: 16px;
+  font-weight: 400;
+  border-radius: 8px;
+}
+
+.cam span.close:hover {
+  color: var(--p-color);
+  border: solid 0.1px var(--p-color);
+}
+
+.item_box {
+  width: 40%;
+  height: 380px;
+  background: var(--bg-color);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.item_box button {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--bg-color);
+  background-color: var(--text-color);
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  border: none;
+}
+
+.item_box button:hover {
+  color: var(--text-color);
+  background-color: var(--p-color);
+}
+
+.ss {
+  width: 70%;
+  height: 55%;
+  border: 1px solid var(--p-color);
+  margin-bottom: 2.5%;
+  border-radius: 8px;
+}
+
+.i_box {
+  width: 70%;
+  height: 55%;
+  border: 1px solid var(--p-color);
+  margin-bottom: 2.5%;
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  text-align: center;
+  color: var(--p-color);
+  cursor: pointer;
+  padding: 10px;
+}
+
+input.i_box::file-selector-button {
+  font-weight: bold;
+  color: var(--p-color);
+  padding: 0.5em;
+  border: thin solid grey;
+  border-radius: 3px;
+  display: flex;
+  background: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 16px;
+  border: none;
+}
+
+.graphs {
+  display: none;
+}
+
+.active {
+  display: block;
+}
+
+#chart-section {
+  display: none;
+}
+
+.sidebar {
+  height: 100%;
+  width: 200px;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  padding-top: 20px;
+}
+
+.sidebar a {
+  padding: 10px 15px;
+  text-decoration: none;
+  font-size: 18px;
+  color: white;
+  display: block;
+}
+
+.sidebar a:hover {
+  background-color: #575757;
+}
+
+.main-content {
+  margin-left: 210px;
+  padding: 20px;
+}
+
+.chart-container {
+  width: 100%;
+  height: 400px;
+  margin-bottom: 40px;
+}
+
+/* Graphs */
+section.graphs {
+  width: 100%;
+  height: 100vh;
+}
+
+.shell,
+.graph-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.graph-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.item1 {
+  grid-area: main;
+  height: 100%;
+}
+
+.item2 {
+  grid-area: menu;
+  height: 100%;
+}
+
+.item3 {
+  grid-area: menu1;
+  height: 100%;
+}
+
+.item4 {
+  grid-area: menu2;
+  height: 100%;
+}
+
+.grid-container {
+  display: grid;
+  grid-template-areas:
+    'main main main main main menu'
+    'main main main main main menu1'
+    'main main main main main menu2'
+    'main main main main main menu2';
+  gap: 5px;
+}
+
+
+
+from flask import Flask, render_template, jsonify, request, send_from_directory
+import cv2
+import threading
+import time
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
+import os
+import json
+from dotenv import load_dotenv
+
+load_dotenv()
+
+app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'uploaded_videos'
+app.config['ALERTS_FILE'] = 'alerts.json'
+app.config['PREVIOUS_ACCIDENTS_FOLDER'] = 'static/accidents'
+app.config['GRAPH_FOLDER'] = 'static/graphs'
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
+if not os.path.exists(app.config['PREVIOUS_ACCIDENTS_FOLDER']):
+    os.makedirs(app.config['PREVIOUS_ACCIDENTS_FOLDER'])
+
+if not os.path.exists(app.config['GRAPH_FOLDER']):
+    os.makedirs(app.config['GRAPH_FOLDER'])
+
+# Initialize the alerts file if it doesn't exist
+if not os.path.exists(app.config['ALERTS_FILE']):
+    with open(app.config['ALERTS_FILE'], 'w') as f:
+        json.dump([], f)
+
+def check_for_accident(frame, background_subtractor, min_area=500):
+    fg_mask = background_subtractor.apply(frame)
+    fg_mask = cv2.threshold(fg_mask, 200, 255, cv2.THRESH_BINARY)[1]
+    fg_mask = cv2.dilate(fg_mask, None, iterations=2)
+    contours, _ = cv2.findContours(fg_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    for contour in contours:
+        if cv2.contourArea(contour) < min_area:
+            continue
+        return True
+    return False
+
+def detect_accidents(video_source=0):
+    cap = cv2.VideoCapture(video_source)
+    background_subtractor = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=False)
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        if check_for_accident(frame, background_subtractor):
+            timestamp = time.strftime('%Y-%m-%d_%H-%M-%S')
+            photo_path = f'static/accidents/accident_{timestamp}.jpg'
+            cv2.imwrite(photo_path, frame)
+            location = '1234 Example St, City, Country'
+            alert = {
+                'time': timestamp,
+                'location': location,
+                'photo': photo_path
+            }
+            save_alert(alert)
+            save_previous_accident_photo(photo_path)
+            send_email_alert(alert)
+            update_alert_list()
+        time.sleep(1)
+    cap.release()
+
+def save_alert(alert):
+    with open(app.config['ALERTS_FILE'], 'r') as f:
+        alerts = json.load(f)
+    alerts.append(alert)
+    with open(app.config['ALERTS_FILE'], 'w') as f:
+        json.dump(alerts, f, indent=4)
+
+def save_previous_accident_photo(photo_path):
+    destination_path = os.path.join(app.config['PREVIOUS_ACCIDENTS_FOLDER'], os.path.basename(photo_path))
+    os.rename(photo_path, destination_path)
+
+def send_email_alert(alert):
+    sender_email = os.getenv('SENDER_EMAIL')
+    receiver_email = os.getenv('RECEIVER_EMAIL')
+    password = os.getenv('EMAIL_PASSWORD')
+    smtp_server = os.getenv('SMTP_SERVER')
+    smtp_port = os.getenv('SMTP_PORT')
+
+    subject = "Accident Detected"
+    body = f"An accident was detected at {alert['time']}.\nLocation: {alert['location']}"
+
+    msg = MIMEMultipart()
+    msg['From'] = sender_email
+    msg['To'] = receiver_email
+    msg['Subject'] = subject
+    msg.attach(MIMEText(body, 'plain'))
+
+    attachment = open(alert['photo'], 'rb')
+    part = MIMEBase('application', 'octet-stream')
+    part.set_payload(attachment.read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', f"attachment; filename= {os.path.basename(alert['photo'])}")
+
+    msg.attach(part)
+    text = msg.as_string()
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, receiver_email, text)
+
+def update_alert_list():
+    with open(app.config['ALERTS_FILE'], 'r') as f:
+        alerts = json.load(f)
+    alert_list = [{'time': alert['time'], 'location': alert['location']} for alert in alerts]
+    socketio.emit('update_alert_list', {'alerts': alert_list})
+
+@app.route('/')
+def index():
+    with open(app.config['ALERTS_FILE'], 'r') as f:
+        alerts = json.load(f)
+    previous_accidents = os.listdir(app.config['PREVIOUS_ACCIDENTS_FOLDER'])
+    return render_template('index.html', alerts=alerts, previous_accidents=previous_accidents)
+
+@app.route('/alerts')
+def get_alerts():
+    with open(app.config['ALERTS_FILE'], 'r') as f:
+        alerts = json.load(f)
+    return jsonify(alerts)
+
+@app.route('/previous_accidents')
+def get_previous_accidents():
+    previous_accidents = os.listdir(app.config['PREVIOUS_ACCIDENTS_FOLDER'])
+    return jsonify(previous_accidents)
+
+@app.route('/upload_video', methods=['POST'])
+def upload_video():
+    if 'video' not in request.files:
+        return 'No video part', 400
+
+    file = request.files['video']
+    if file.filename == '':
+        return 'No selected file', 400
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+    file.save(file_path)
+    
+    threading.Thread(target=detect_accidents, args=(file_path,)).start()
+    
+    return 'Video uploaded successfully', 200
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(app.config['GRAPH_FOLDER'], filename)
+
+if __name__ == '__main__':
+    threading.Thread(target=detect_accidents).start()
+    app.run(debug=True)

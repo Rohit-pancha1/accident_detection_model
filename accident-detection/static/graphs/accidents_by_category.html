@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accidents by Category</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="./graphs.css">
+</head>
+<body>
+    <div id="accidentsByCategory"></div>
+    <script>
+        var data = [{
+            x: ['Category 1', 'Category 2', 'Category 3', 'Category 4'],
+            y: [10, 15, 13, 17],
+            type: 'scatter',
+            mode: 'lines+markers'
+        }];
+        Plotly.newPlot('accidentsByCategory', data);
+    </script>
+</body>
+</html>

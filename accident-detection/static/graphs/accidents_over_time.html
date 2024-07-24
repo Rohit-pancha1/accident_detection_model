@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Accidents Over Time</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="./graphs.css">
+</head>
+<body>
+    <div class="takeGraph">
+        <div id="accidentsOverTime">
+    </div>
+        
+    </div>
+    <script>
+        var data = [{
+            x: ['2021-01', '2021-02', '2021-03', '2021-04', '2021-05'],
+            y: [10, 15, 13, 17, 10],
+            type: 'scatter'
+        }];
+        Plotly.newPlot('accidentsOverTime', data);
+    </script>
+</body>
+</html>

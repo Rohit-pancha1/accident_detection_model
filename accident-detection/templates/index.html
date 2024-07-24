@@ -1,0 +1,120 @@
+
+    {% include "header.html" %}
+    <div id="main" style="padding-top: 100px;">
+
+        <button class="cctv_brn" onclick="location.href='{{ url_for('cctv_dashboard') }}'">surveillance cam</button>
+
+        <section class="home active" id="home">
+            <div class="container">
+                <h1 class="title">Accident Detection</h1>
+                <div class="items">
+                    <div class="video_stream item_box">
+                        <div class="ss"></div>
+                        <div class="cam start_cam">
+                            <span class="close" onclick="closeStream()">Close</span>
+                            <video id="videoFeed" autoplay></video>
+                        </div>
+                        <button class="start_cam" onclick="getCameraStream()">Start Camera</button>
+                    </div>
+                    <div class="file_upload item_box">
+                        <input type="file" class="i_box" id="videoInput" accept="video/*">
+                        <button onclick="uploadVideo()">Upload Video</button>
+                    </div>
+                </div>
+                <div id="alerts">
+                    <h2 class="title2 ">Alerts</h2>
+                    <div id="alertList" class="alert">
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="previousAccidentReport" id="previousAccidentReport">
+            <div class="container">
+                <h2>Previous Accident Reports</h2>
+                <div id="previousAccidentPhotos"></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        async function getCameraStream() {
+            try {
+                document.querySelector('.cam').style.display = 'flex';
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                const video = document.getElementById("videoFeed");
+                video.srcObject = stream;
+            } catch (error) {
+                console.error("Error accessing the camera", error);
+            }
+        }
+
+        function closeStream() {
+            document.querySelector('.cam').style.display = 'none';
+            const video = document.getElementById("videoFeed");
+            const stream = video.srcObject;
+            const tracks = stream.getTracks();
+            tracks.forEach(track => track.stop());
+            video.srcObject = null;
+        }
+
+        async function uploadVideo() {
+            const fileInput = document.getElementById("videoInput");
+            if (fileInput.files.length === 0) {
+                alert("Please select a video file to upload.");
+                return;
+            }
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append("video", file);
+
+            try {
+                const response = await fetch("/upload_video", {
+                    method: "POST",
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert("Video uploaded successfully.");
+                } else {
+                    alert("Failed to upload video.");
+                }
+            } catch (error) {
+                console.error("Error uploading the video", error);
+                alert("An error occurred while uploading the video.");
+            }
+        }
+
+        async function fetchAlerts() {
+            try {
+                const response = await fetch("/alerts");
+                if (response.ok) {
+                    const alerts = await response.json();
+                    const alertList = document.getElementById("alertList");
+                    alertList.innerHTML = "";
+                    alerts.forEach(alert => {
+                        const alertDiv = document.createElement("div");
+                        alertDiv.innerHTML = `
+                            <div class="alert_box">
+                                <img src="${alert.photo}" alt="Accident Photo" width="200">
+                                <p><strong>Time:</strong> ${alert.time}</p>
+                                <p><strong>Location:</strong> ${alert.location}</p>
+                            </div>
+                        `;
+                        alertList.appendChild(alertDiv);
+                    });
+                } else {
+                    console.error("Failed to fetch alerts");
+                }
+            } catch (error) {
+                console.error("Error fetching alerts", error);
+            }
+        }
+
+        setInterval(fetchAlerts, 5000);
+
+        document.addEventListener("DOMContentLoaded", fetchAlerts);
+    </script>
+</body>
+</html>

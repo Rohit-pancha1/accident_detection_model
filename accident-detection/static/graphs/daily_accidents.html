@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Accidents</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="./graphs.css">
+</head>
+<body>
+    <div id="dailyAccidents"></div>
+    <script>
+        var data = [{
+            x: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            y: [5, 7, 6, 8, 7, 9, 4],
+            type: 'bar'
+        }];
+        Plotly.newPlot('dailyAccidents', data);
+    </script>
+</body>
+</html>
+
